@@ -2,6 +2,8 @@
 
 #include <QApplication>
 
+// Git test from Qt Creator
+
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
