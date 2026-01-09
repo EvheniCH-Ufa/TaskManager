@@ -3,6 +3,7 @@
 #include <QApplication>
 
 // Git test from Qt Creator
+// Second test from Qt Creator GUI
 
 int main(int argc, char *argv[])
 {
