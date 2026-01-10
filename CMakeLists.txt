@@ -35,6 +35,8 @@ add_executable(TaskManager
     TaskDialog.ui
     DeadlineChecker.h
     DeadlineChecker.cpp
+    TaskModel.h
+    TaskModel.cpp
 )
 
 #Добавить ВСЕ необходимые Qt модули
