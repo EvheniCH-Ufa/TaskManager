@@ -1,0 +1,26 @@
+# Qt
+*.pro.user
+*.pro.user.*
+Makefile*
+
+# C++
+*.o
+*.obj
+*.exe
+*.dll
+
+# CMake
+*.txt.user
+
+# Сборка
+build-*/
+release/
+debug/
+
+# Базы данных
+*.db
+*.db-journal
+
+# Системные
+.DS_Store
+Thumbs.db
