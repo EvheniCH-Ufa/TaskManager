@@ -5,6 +5,10 @@
 #include <QFont>
 #include <QDebug>
 
+
+const int COUNT_SECONDS_IN_HOUR = 60*60;
+const int COUNT_SECONDS_IN_DAY  = 60*60*24;
+
 TaskModel::TaskModel(QObject *parent, QSqlDatabase db)
     : QSqlTableModel(parent, db)
     , m_colorScheme(0)
@@ -163,5 +167,62 @@ QVariant TaskModel::headerData(int section, Qt::Orientation orientation, int rol
 // Вспомогательные методы
 TaskModel::TaskStatus TaskModel::getTaskStatus(const QDateTime &deadline, bool completed) const
 {
+    if (completed)
+    {
+        return StatusCompleted;
+    }
 
+    if (!deadline.isValid())
+    {
+        return StatusNormal;
+    }
+
+    QDateTime currentDateTime = QDateTime::currentDateTime();
+    qint64 secondToDeadLine = currentDateTime.secsTo(deadline);
+
+    if (secondToDeadLine < 0)
+    {
+        return StatusExpired; // prosrocheno
+    }
+    else if (secondToDeadLine < COUNT_SECONDS_IN_HOUR)
+    {
+        return StatusUrgent;
+    }
+    else if (secondToDeadLine < COUNT_SECONDS_IN_DAY)
+    {
+        return StatusSoon;
+    }
+    return StatusNormal;
+}
+
+QColor TaskModel::getStatusColor(TaskModel::TaskStatus status) const
+{
+    switch (m_colorScheme)
+    {
+        case StandartScheme:
+        {
+            switch (status)
+            {
+                case StatusNormal: return QColor("#ffffff");
+                case StatusSoon: return QColor("#fffacd");  // светло-желтый
+                case StatusUrgent: return QColor("#ffcccb"); // светло-красный
+                case StatusExpired: return QColor("#ffcccc");
+                case StatusCompleted: return QColor("#d4edda"); // светло-зеленый
+                default: return QColor("#ffffff");
+            }
+        }
+        case DarkScheme:
+        {
+            switch (status)
+            {
+                case StatusNormal: return QColor("#2d3748");
+                case StatusSoon: return QColor("#4a5568");
+                case StatusUrgent: return QColor("#c53030");
+                case StatusExpired: return QColor("#742a2a");
+                case StatusCompleted: return QColor("#276749");
+                default: return QColor("#2d3748");
+            }
+        }
+        default: return QColor("#ffffff");
+    }
 }

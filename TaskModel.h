@@ -12,7 +12,8 @@ class TaskModel : public QSqlTableModel
     Q_PROPERTY(int colorScheme READ colorScheme WRITE setColorScheme NOTIFY colorSchemeChanged)
 
 public:
-    enum Columns {
+    enum Columns
+    {
         ColId = 0, // id
         ColTitle,  // Title
         ColDescription, // desc
@@ -23,13 +24,21 @@ public:
         ColCount       //
     };
 
-    enum TaskStatus {
-        StatusNormal,
+    enum TaskStatus
+    {
+        StatusNormal,    // default
         StatusSoon,      // < 24 часа
         StatusUrgent,    // < 1 часа
-        StatusExpired,
-        StatusCompleted
+        StatusExpired,   // prosrocheno
+        StatusCompleted  // completed
     };
+
+    enum ColorSchemes
+    {
+        StandartScheme = 0,
+        DarkScheme
+    };
+
 
     explicit TaskModel(QObject *parent = nullptr, QSqlDatabase db = QSqlDatabase());
     ~TaskModel();
