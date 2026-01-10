@@ -9,6 +9,9 @@ Makefile*
 *.exe
 *.dll
 
+# CMake
+*.txt.user
+
 # Сборка
 build-*/
 release/
