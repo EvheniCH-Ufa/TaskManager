@@ -4,6 +4,7 @@
 
 // Git test from Qt Creator
 // Second test from Qt Creator GUI
+// 3 - noteboock
 
 int main(int argc, char *argv[])
 {
