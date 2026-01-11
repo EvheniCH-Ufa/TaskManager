@@ -16,11 +16,11 @@ TaskModel::TaskModel(QObject *parent, QSqlDatabase db)
     // Настраиваем таблицу
 
     setTable("tasks"); // nasleduem ot QSqlTableModel
-   /* Связывает модель с конкретной таблицей в базе данных, работает с таблицей под названием tasks:
+   /* Связывает модель с конкретной таблицей в базе данных, в данном случае работает с таблицей под названием tasks:
    - Модель теперь знает, из какой таблицы брать данные
    - Автоматически получает структуру таблицы (поля, типы)
    - Может выполнять SQL-запросы к этой таблице
-   Это метод родительского класса*/
+   Это метод родительского класса, мы его переопределяем*/
 
    setEditStrategy(QSqlTableModel::OnRowChange);
    // 1. OnRowChange - сохраняет при переходе на другую строку
@@ -163,6 +163,40 @@ QVariant TaskModel::headerData(int section, Qt::Orientation orientation, int rol
     return QSqlTableModel::headerData(section, orientation, role);
 }
 
+void TaskModel::filterByStatus(const QString &status)
+{
+    if (status == "Все")
+    {
+        setFilter("");
+    }
+    else if (status == "Активные")
+    {
+        setFilter("completed = 0 AND archived = 0"); // добавить про архив
+    }
+    else if (status == "Просроченные")
+    {
+        QString filter = QString("completed = 0 AND archived = 0 AND deadline < '%1'")
+                    .arg(QDateTime::currentDateTime().toString(Qt::ISODate));
+        setFilter(filter);
+    }
+    else if (status == "Выполненные")
+    {
+        setFilter("completed = 1 AND arhived = 0" );
+    }
+    else if (status == "Архивные")
+    {
+        setFilter("archived = 1");
+    }
+    else if (status == "Срочные")
+    {
+        QString filter = QString("completed = 0 AND archived = 0 AND deadline > '%1' AND deadline < '%2'")
+                    .arg(QDateTime::currentDateTime().toString(Qt::ISODate)
+                       , QDateTime::currentDateTime().addSecs(COUNT_SECONDS_IN_HOUR).toString(Qt::ISODate));
+        setFilter(filter);
+    }
+    select(); // apply filter
+}
+
 
 // Вспомогательные методы
 TaskModel::TaskStatus TaskModel::getTaskStatus(const QDateTime &deadline, bool completed) const
@@ -225,4 +259,15 @@ QColor TaskModel::getStatusColor(TaskModel::TaskStatus status) const
         }
         default: return QColor("#ffffff");
     }
+}
+
+QString TaskModel::priorityToStars(int priority) const
+{
+    QString result;
+    result.reserve(5);
+    for (int i = 0; i < 5; ++i)
+    {
+        result += (i < priority) ?  "★" : "☆";
+    }
+    return result;
 }
