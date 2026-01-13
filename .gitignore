@@ -10,7 +10,7 @@ Makefile*
 *.dll
 
 # CMake
-*.txt.user
+*.txt.user*
 
 # Сборка
 build-*/
