@@ -4,10 +4,12 @@
 #include <QBrush>
 #include <QFont>
 #include <QDebug>
+#include <QSettings>
 
 
-const int COUNT_SECONDS_IN_HOUR = 60*60;
-const int COUNT_SECONDS_IN_DAY  = 60*60*24;
+const int SECONDS_IN_HOUR = 60*60;
+const int SECONDS_IN_DAY  = 60*60*24;
+const int SCHEME_DEFAULT = 0; // normal
 
 TaskModel::TaskModel(QObject *parent, QSqlDatabase db)
     : QSqlTableModel(parent, db)
@@ -50,6 +52,13 @@ TaskModel::TaskModel(QObject *parent, QSqlDatabase db)
    setHeaderData(ColCompleted, Qt::Horizontal, "✓");
    setHeaderData(ColArchived, Qt::Horizontal, "📁");
 }
+
+
+TaskModel::~TaskModel()
+{
+    saveSettings();
+}
+
 
 QVariant TaskModel::data(const QModelIndex &index, int role) const
 {
@@ -163,40 +172,6 @@ QVariant TaskModel::headerData(int section, Qt::Orientation orientation, int rol
     return QSqlTableModel::headerData(section, orientation, role);
 }
 
-void TaskModel::filterByStatus(const QString &status)
-{
-    if (status == "Все")
-    {
-        setFilter("");
-    }
-    else if (status == "Активные")
-    {
-        setFilter("completed = 0 AND archived = 0"); // добавить про архив
-    }
-    else if (status == "Просроченные")
-    {
-        QString filter = QString("completed = 0 AND archived = 0 AND deadline < '%1'")
-                    .arg(QDateTime::currentDateTime().toString(Qt::ISODate));
-        setFilter(filter);
-    }
-    else if (status == "Выполненные")
-    {
-        setFilter("completed = 1 AND arhived = 0" );
-    }
-    else if (status == "Архивные")
-    {
-        setFilter("archived = 1");
-    }
-    else if (status == "Срочные")
-    {
-        QString filter = QString("completed = 0 AND archived = 0 AND deadline > '%1' AND deadline < '%2'")
-                    .arg(QDateTime::currentDateTime().toString(Qt::ISODate)
-                       , QDateTime::currentDateTime().addSecs(COUNT_SECONDS_IN_HOUR).toString(Qt::ISODate));
-        setFilter(filter);
-    }
-    select(); // apply filter
-}
-
 
 // Вспомогательные методы
 TaskModel::TaskStatus TaskModel::getTaskStatus(const QDateTime &deadline, bool completed) const
@@ -218,11 +193,11 @@ TaskModel::TaskStatus TaskModel::getTaskStatus(const QDateTime &deadline, bool c
     {
         return StatusExpired; // prosrocheno
     }
-    else if (secondToDeadLine < COUNT_SECONDS_IN_HOUR)
+    else if (secondToDeadLine < SECONDS_IN_HOUR)
     {
         return StatusUrgent;
     }
-    else if (secondToDeadLine < COUNT_SECONDS_IN_DAY)
+    else if (secondToDeadLine < SECONDS_IN_DAY)
     {
         return StatusSoon;
     }
@@ -270,4 +245,76 @@ QString TaskModel::priorityToStars(int priority) const
         result += (i < priority) ?  "★" : "☆";
     }
     return result;
+}
+
+void TaskModel::filterByStatus(const QString &status)
+{
+    if (status == "Все")
+    {
+        setFilter("");
+    }
+    else if (status == "Активные")
+    {
+        setFilter("completed = 0 AND archived = 0"); // добавить про архив
+    }
+    else if (status == "Просроченные")
+    {
+        QString filter = QString("completed = 0 AND archived = 0 AND deadline < '%1'")
+                    .arg(QDateTime::currentDateTime().toString(Qt::ISODate));
+        setFilter(filter);
+    }
+    else if (status == "Выполненные")
+    {
+        setFilter("completed = 1 AND arhived = 0" );
+    }
+    else if (status == "Архивные")
+    {
+        setFilter("archived = 1");
+    }
+    else if (status == "Срочные")
+    {
+        QString filter = QString("completed = 0 AND archived = 0 AND deadline > '%1' AND deadline < '%2'")
+                    .arg(QDateTime::currentDateTime().toString(Qt::ISODate)
+                       , QDateTime::currentDateTime().addSecs(SECONDS_IN_HOUR).toString(Qt::ISODate));
+        setFilter(filter);
+    }
+    select(); // apply filter
+}
+
+int TaskModel::getColorScheme() const //13/01/2026
+{
+    return m_colorScheme;
+}
+
+void TaskModel::setColorScheme(int scheme) //13/01/2026
+{
+    if (m_colorScheme == scheme)
+    {
+        return;
+    }
+
+    m_colorScheme = scheme;
+    emit colorSchemeChanged(m_colorScheme);
+
+    // update view   -= indexes aka iterators =-
+    emit dataChanged(index(0, 0), index(rowCount()-1, columnCount()-1));
+}
+
+void TaskModel::updateTaskColors() //13/01/2026
+{
+    if (rowCount() > 0)
+    {
+        emit dataChanged(index(0, 0), index(rowCount()-1, columnCount()-1)); //13/01/2026
+    }
+}
+
+void TaskModel::loadSettings() //13/01/2026
+{
+    int colorSheme = m_settings.value("ColorScheme", SCHEME_DEFAULT).toInt();
+    m_colorScheme = static_cast<ColorSchemes>(colorSheme);
+}
+
+void TaskModel::saveSettings() //13/01/2026
+{
+    m_settings.setValue("ColorScheme", static_cast<int>(m_colorScheme));
 }

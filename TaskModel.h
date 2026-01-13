@@ -4,12 +4,13 @@
 #include<QColor>
 #include<QDateTime>
 #include<QSqlTableModel>
+#include<QSettings>
 
 
 class TaskModel : public QSqlTableModel
 {
     Q_OBJECT
-    Q_PROPERTY(int colorScheme READ colorScheme WRITE setColorScheme NOTIFY colorSchemeChanged)
+    Q_PROPERTY(int colorScheme READ getColorScheme WRITE setColorScheme NOTIFY colorSchemeChanged)
 
 public:
     enum Columns
@@ -50,7 +51,7 @@ public:
                        int role = Qt::DisplayRole) const override;
 
     // Цветовые схемы
-    int colorScheme() const;
+    int getColorScheme() const;
     void setColorScheme(int scheme);
 
     // Фильтрация
@@ -61,11 +62,15 @@ signals:
 
 private:
     int m_colorScheme;
+    QSettings m_settings;
+
 
     TaskStatus getTaskStatus(const QDateTime &deadline, bool completed) const;
     QColor getStatusColor(TaskStatus status) const;
     QString priorityToStars(int priority) const;
     void updateTaskColors();
+    void loadSettings();
+    void saveSettings();
 };
 
 #endif // TASKMODEL_H
