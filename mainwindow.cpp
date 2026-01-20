@@ -13,8 +13,44 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
+    , m_taskModel(new TaskModel(this))
+    , m_proxyModel(new QSortFilterProxyModel(this))
 {
     ui->setupUi(this);
+    setupMenu();
+    setupToolbar();
+    setupConnections();
+    setupTrayIcon();
+    setupShortcuts();
+    loadSettings();
+
+    // Настройка прокси-модели для сортировки
+    m_proxyModel->setSourceModel(m_taskModel);
+    m_proxyModel->setSortRole(Qt::UserRole);
+
+    // Настройка таблицы
+    m_tableView->setModel(m_proxyModel);
+    m_tableView->setSortingEnabled(true);
+    m_tableView->setAlternatingRowColors(true);
+    m_tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
+    m_tableView->setContextMenuPolicy(Qt::CustomContextMenu);
+
+    // Настройка заголовков
+    QHeaderView *header = m_tableView->horizontalHeader();
+    header->setSectionsClickable(true);
+    header->setSortIndicatorShown(true);
+    header->setStretchLastSection(true);
+
+    // Настройка фильтров
+    QStringList filtres = {"Все", "Активные", "Выполненные", "Просроченные", "Срочные (<1ч)"};
+   //  m_colorSchemeCombo->addItems(schemes);
+
+    // Загружаем задачи
+    if (!m_taskModel->select())
+    {
+        QMessageBox::critical(this, "Ошибка", "Не удалось выгрузить данные из БД!");
+    }
+
 
     QSettings settings;
     restoreGeometry(settings.value("geometry").toByteArray());
@@ -125,6 +161,11 @@ void MainWindow::loadTasks()
          //  ui->m_tableWidget->item(row, col)->setForeground(QColor(185, 240, 195));
        }
    }
+}
+
+void MainWindow::setupMenu()
+{
+
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -253,6 +294,11 @@ void MainWindow::on_deadlineFound(const QString &task_title)
 {
      statusBar()->showMessage("⚠ Срочно: " + task_title, 5000);
      QMessageBox::warning(this, "Срочная задача!", "Задача " + task_title + " скоро дедлайн!");
+}
+
+void MainWindow::onEditTask()
+{
+
 }
 
 void MainWindow::on_actionAbout_triggered()
